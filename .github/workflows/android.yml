@@ -26,8 +26,7 @@ jobs:
           echo "Java path: $JDK"
           SDK=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/lib/android-sdk}}
           echo "Android SDK path: $SDK"
-          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore /root/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
-          godot --headless --quit || true
+[ -f /root/debug.keystore ] || keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore /root/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12          godot --headless --quit || true
           CFG=$(ls ~/.config/godot/editor_settings-*.tres | head -1)
           echo "Editor settings file: $CFG"
           {
