@@ -17,6 +17,11 @@ jobs:
           mkdir -v -p ~/.local/share/godot/export_templates/
           cp -r /root/.local/share/godot/export_templates/. ~/.local/share/godot/export_templates/
 
+      - name: Import project (twice, builds the class cache)
+        run: |
+          godot --headless --import || true
+          godot --headless --import || true
+
       - name: Setup Android (Java, debug keystore, editor settings)
         run: |
           if ! command -v javac >/dev/null 2>&1; then
@@ -27,21 +32,22 @@ jobs:
           SDK=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/lib/android-sdk}}
           echo "Android SDK path: $SDK"
           [ -f /root/debug.keystore ] || keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore /root/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
-          godot --headless --quit || true
-          CFG=$(ls ~/.config/godot/editor_settings-*.tres | head -1)
-          echo "Editor settings file: $CFG"
-          {
-            echo "export/android/android_sdk_path = \"$SDK\""
-            echo "export/android/java_sdk_path = \"$JDK\""
-            echo "export/android/debug_keystore = \"/root/debug.keystore\""
-            echo "export/android/debug_keystore_user = \"androiddebugkey\""
-            echo "export/android/debug_keystore_pass = \"android\""
-            echo "export/android/shutdown_adb_on_exit = true"
-          } >> "$CFG"
-          tail -8 "$CFG"
-
-      - name: Import project
-        run: godot --headless --import || true
+          mkdir -p ~/.config/godot
+          for NAME in editor_settings-4.tres editor_settings-4.3.tres; do
+            {
+              echo "[gd_resource type=\"EditorSettings\" format=3]"
+              echo ""
+              echo "[resource]"
+              echo "export/android/android_sdk_path = \"$SDK\""
+              echo "export/android/java_sdk_path = \"$JDK\""
+              echo "export/android/debug_keystore = \"/root/debug.keystore\""
+              echo "export/android/debug_keystore_user = \"androiddebugkey\""
+              echo "export/android/debug_keystore_pass = \"android\""
+              echo "export/android/shutdown_adb_on_exit = true"
+            } > ~/.config/godot/$NAME
+          done
+          ls -la ~/.config/godot
+          cat ~/.config/godot/editor_settings-4.3.tres
 
       - name: Export debug APK
         run: |
